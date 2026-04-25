@@ -1,36 +1,38 @@
-# === Step 5: Strictly Separated Task Definitions ===
-
 analyze_user_task:
   description: >
-    Use the search_user_profile_data tool to find information about user {user_id}.
-    You MUST call the tool with a natural language search_query string, for example:
-    Action: search_user_profile_data
-    Action Input: {{"search_query": "What are the review habits and average stars for user {user_id}"}}
-    Also use search_historical_reviews_data to find past reviews written by this user.
-    Understand their average stars, what words they commonly use, and their general sentiment.
+    Target user_id: {user_id}.
+    Use search_user_profile_data to find the target user's profile record.
+    Use search_historical_reviews_data to find historical reviews written by this user.
+    Tool inputs must be natural language search_query strings, not raw JSON.
+    Summarize the user's rating habits, likely cuisine or service preferences, common complaints,
+    positive signals, and review-writing style.
   expected_output: >
-    A detailed markdown profile of user {user_id}'s preferences and rating habits.
+    A concise Markdown profile of user {user_id}, grounded in retrieved Yelp data, with specific notes about
+    rating habits and taste preferences.
   agent: user_analyst
 
 analyze_item_task:
   description: >
-    Use the search_restaurant_feature_data tool to find information about business {item_id}.
-    You MUST call the tool with a natural language search_query string, for example:
-    Action: search_restaurant_feature_data
-    Action Input: {{"search_query": "What are the categories and star rating for business {item_id}"}}
-    Also use search_historical_reviews_data to find past reviews about this business.
-    Understand its categories, attributes, and overall public sentiment.
+    Target business_id: {business_id}.
+    Use search_restaurant_feature_data to find the target business record.
+    Use search_historical_reviews_data to find historical reviews about this business.
+    The Desktop latest_ai_development data stores this identifier as item_id, so search for both business_id
+    and item_id wording when writing your search query.
+    Tool inputs must be natural language search_query strings, not raw JSON.
+    Summarize the business categories, attributes, public sentiment, strengths, weaknesses, and any risk factors
+    that may affect the target user's experience.
   expected_output: >
-    A detailed markdown report of business {item_id}'s features, pros, and cons.
+    A concise Markdown report about business {business_id}, grounded in retrieved Yelp data, including restaurant
+    strengths and weaknesses.
   agent: item_analyst
 
 predict_review_task:
   description: >
-    Using the User Profile and the Item Report from the previous tasks, predict the Stars (1.0 to 5.0) and write the Review Text.
-    You MUST base your prediction on the actual data retrieved by the previous agents. Do NOT say the data was not found.
-    Consider if the restaurant's features align with the user's historical preferences.
+    Combine the user profile and business report from the previous tasks.
+    Predict how user {user_id} would rate business {business_id}, and write a plausible review in that user's style.
+    Compare the predicted result against the available ground truth only if it was supplied by main.py.
   expected_output: >
-    Output ONLY a valid JSON object with exactly two keys: "stars" (a float from 1.0 to 5.0) and "review" (a string).
-    Use single curly braces. Example: {"stars": 4.5, "review": "The review text..."}
-    Do NOT include any text before or after the JSON object. Do NOT use double curly braces.
+    Output ONLY valid JSON with exactly these keys:
+    {"stars": 4.0, "text": "Predicted Yelp review text.", "rationale": "Brief evidence-based reason."}
+    stars must be a number from 1.0 to 5.0.
   agent: prediction_modeler

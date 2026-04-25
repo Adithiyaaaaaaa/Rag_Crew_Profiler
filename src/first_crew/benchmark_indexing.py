@@ -1,60 +1,52 @@
+from __future__ import annotations
+
 import time
-from datetime import datetime
-import os
-from dotenv import load_dotenv
-load_dotenv()
+from pathlib import Path
 
 from crewai_tools import JSONSearchTool
-from langchain_community.embeddings import HuggingFaceEmbeddings
 
-embedding_model = HuggingFaceEmbeddings(
-    model_name='BAAI/bge-small-en-v1.5'
-)
-rag_config = {
-    "embedding_model": {
-        "provider": "sentence-transformer",
-        "config": {
-            "model_name": "BAAI/bge-small-en-v1.5"
-        }
-    }
-}
+from first_crew.crew import RAG_CONFIG
 
-def benchmark_single_tool(name: str, json_path: str, run_id: int):
-    print(f"\n=== Benchmarking {name} Database ===")
-    
-    # 1. Measure initialization (this is where CrewAI spends heavy CPU on chunking & ChromaDB writes)
-    print(f"[{name}] Starting Tool Initialization & Fresh Indexing (HEAVY CPU computation)...")
-    init_start = time.time()
-    
+BASE_DIR = Path(__file__).resolve().parents[2]
+DATA_DIR = BASE_DIR / "data"
+
+
+def _first_existing_path(*paths: Path) -> Path:
+    for path in paths:
+        if path.exists():
+            return path
+    return paths[0]
+
+
+def benchmark_single_tool(label: str, json_path: Path, collection_prefix: str, run_id: int) -> None:
+    print(f"\n=== Fresh Indexing Benchmark: {label} ===")
+    if not json_path.exists():
+        print(f"[{label}] Skipped: missing {json_path}")
+        return
+
+    collection_name = f"milestone1_fresh_{collection_prefix}_{run_id}"
+    start = time.perf_counter()
     rag_tool = JSONSearchTool(
-        json_path=json_path,
-        collection_name=f'benchmark_true_fresh_index_{name}_{run_id}',
-        config=rag_config
+        json_path=str(json_path),
+        collection_name=collection_name,
+        config=RAG_CONFIG,
     )
-    
-    init_end = time.time()
-    print(f"[{name}] Initialization & Indexing Time: {init_end - init_start:.2f} seconds")
-    
-    # 2. Measure retrieval speed after warm-up (pure ChromaDB query)
-    print(f"[{name}] Starting RAG Retrieval test...")
-    retrieval_start = time.time()
-    
-    try:
-        res = rag_tool._run(search_query="Find relevant information")
-        retrieval_end = time.time()
-        print(f"[{name}] Pure Retrieval Time: {retrieval_end - retrieval_start:.2f} seconds")
-    except Exception as e:
-        print(f"Error during {name} retrieval: {e}")
+    index_time = time.perf_counter() - start
+    print(f"[{label}] Fresh Indexing Time: {index_time:.2f}s")
 
-def run_indexing_benchmark():
-    # Use current timestamp as run_id to ensure ChromaDB cannot match any existing collection snapshots
+    start = time.perf_counter()
+    rag_tool._run(search_query="Find relevant Yelp recommendation evidence.")
+    retrieval_time = time.perf_counter() - start
+    print(f"[{label}] Retrieval After Fresh Index: {retrieval_time:.2f}s")
+
+
+def run_indexing_benchmark() -> None:
     run_id = int(time.time())
-    print("=== Starting True Vector Indexing Latency Benchmark ===")
-    print("We are now measuring the exact time spent ON INITIALIZING the JSONSearchTool.\n")
-    
-    benchmark_single_tool('Filtered_User', 'data/filtered_user.json', 1)
-    benchmark_single_tool('Filtered_Item', 'data/filtered_item.json', 1)
-    benchmark_single_tool('Filtered_Review', 'data/test_review.json', 1)
+    print("=== Milestone 1 Fresh Indexing Benchmark ===")
+    benchmark_single_tool("User", DATA_DIR / "user_subset.json", "user_subset", run_id)
+    benchmark_single_tool("Item", _first_existing_path(DATA_DIR / "item_subset.json", DATA_DIR / "item_subset.jsonl"), "item_subset", run_id)
+    benchmark_single_tool("Review", DATA_DIR / "review_subset.json", "review_subset", run_id)
+
 
 if __name__ == "__main__":
     run_indexing_benchmark()
