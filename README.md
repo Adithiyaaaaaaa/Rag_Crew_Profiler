@@ -2,16 +2,41 @@
 
 This project integrates the WWW'25 AgentSociety Challenge with the CrewAI multi-agent framework. It focuses on building intelligent LLM Agents for user behavior simulation and recommendation systems using advanced orchestration patterns.
 
+## 🧠 Model
+
+This project is optimized to run with **NVIDIA NIM** (NVIDIA Inference Microservices) or local models. 
+The default configuration utilizes high-performance models via the NVIDIA API:
+- **Default LLM:** `openai/minimaxai/minimax-m2.7` or `nvidia/llama-3.3-nemotron-super-49b-v1`
+- **Embeddings:** `BAAI/bge-small-en-v1.5` (running locally via HuggingFace for cost-efficient, fast ChromaDB indexing)
+
 ## 🤖 Agents
 
-| Agent | Role | Tools |
-|-------|------|-------|
-| **user_analyst** | Analyzes user profile and review history | `search_user_profile_data`, `search_historical_reviews_data` |
-| **item_analyst** | Analyzes restaurant features and Yelp reviews | `search_restaurant_feature_data`, `search_historical_reviews_data` |
-| **web_researcher** | Searches the internet for business reputation and news | `SerperDevTool` |
-| **eda_specialist** | Computes star distribution and rating bias for the business | `search_historical_reviews_data` |
-| **prediction_modeler** | Synthesizes all inputs and produces the final prediction | — |
-| **manager_agent** | Orchestrates delegation across all agents (hierarchical only) | — |
+The core architecture operates with specialized AI agents, each serving a distinct role in the simulation ecosystem:
+
+| Agent | Role | Tools | Description |
+|-------|------|-------|-------------|
+| **user_analyst** | Yelp User Profiler | `Interaction Tool Wrapper` | Acts as an expert behavior analyst. It uses the interaction tool to query a target user's historical reviews and profile data to understand their taste, rating habits, and tone. |
+| **item_analyst** | Yelp Restaurant Analyst | `Interaction Tool Wrapper` | Acts as a restaurant critic. It uses the interaction tool to query a target restaurant's profile and historical reviews to identify its strengths, weaknesses, and public sentiment. |
+| **prediction_modeler** | Review Prediction Expert | — | Synthesizes the outputs from the User Analyst and Item Analyst. Using deep behavioral psychology, it accurately predicts the exact star rating (1.0 - 5.0) and generates the mock review text the user would write. |
+
+*(Note: Additional experimental agents like `web_researcher`, `eda_specialist`, and `manager_agent` are available for Collaborative and Hierarchical architectures).*
+
+## ⚙️ How It Works (The Process)
+
+The simulation runs through a highly structured CrewAI pipeline orchestrating the agents:
+
+1. **Task Initialization:** 
+   The Official AgentSociety Simulator provides a `user_id` and an `item_id`. The `CrewAISimulationAgent` adapter receives these IDs and initializes an `InferenceState`.
+2. **Tool Injection:**
+   The simulator's interaction tool is dynamically injected into the CrewAI environment via the `Interaction Tool Wrapper`. This allows the agents to fetch live environment data without breaking CrewAI's sandbox.
+3. **User Profiling (Task 1):** 
+   The `user_analyst` uses the wrapper to query `{"query_type": "user"}` and `{"query_type": "review_by_user"}`. It analyzes the user's average stars, sentiment, and common vocabulary to generate a detailed User Profile markdown report.
+4. **Item Profiling (Task 2):** 
+   The `item_analyst` queries `{"query_type": "item"}` and `{"query_type": "review_by_item"}`. It compiles a comprehensive report on the restaurant's features, categories, and pros/cons.
+5. **Prediction & Synthesis (Task 3):**
+   The `prediction_modeler` ingests both the User Profile and Item Report. It evaluates if the restaurant's features align with the user's historical preferences, outputting a strict JSON dictionary containing the predicted `stars` and simulated `review`.
+6. **Result Submission:** 
+   The output is captured by the Serving Flow and passed back to the official simulator for evaluation against hidden Ground Truth data.
 
 ## 🔍 RAG Tools
 
