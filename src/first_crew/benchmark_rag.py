@@ -30,9 +30,25 @@ def _measure(label: str, tool: JSONSearchTool, query: str) -> float | None:
 def run_benchmark() -> tuple[float | None, float | None, float | None]:
     print("=== Milestone 1 Cached Vector Retrieval Benchmark ===")
     collections = {
-        "User": _first_existing_collection("user_data_v4", "milestone1_user_subset"),
-        "Item": _first_existing_collection("item_data_v4", "milestone1_item_subset"),
-        "Review": _first_existing_collection("review_data_v4", "milestone1_review_subset"),
+        "User": _first_existing_collection(
+            "benchmark_true_fresh_index_Filtered_User_1",
+            "v3_hf_user_data",
+            "v4_nv_user_data",
+            "user_data_v4",
+            "milestone1_user_subset",
+        ),
+        "Item": _first_existing_collection(
+            "benchmark_true_fresh_index_Filtered_Item_1",
+            "v3_hf_item_data",
+            "item_data_v4",
+            "milestone1_item_subset",
+        ),
+        "Review": _first_existing_collection(
+            "benchmark_true_fresh_index_Filtered_Review_1",
+            "v3_hf_review_data",
+            "review_data_v4",
+            "milestone1_review_subset",
+        ),
     }
     missing = [label for label, collection in collections.items() if not _collection_exists(collection)]
     if missing:

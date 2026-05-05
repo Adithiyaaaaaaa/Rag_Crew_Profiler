@@ -26,7 +26,7 @@ item_rag_tool = JSONSearchTool(json_path="data/item_subset.json")
 review_rag_tool = JSONSearchTool(json_path="data/review_subset.json")
 ```
 
-本專案另外加入 sqlite3 collection cache 檢查：若 ChromaDB 已有 Desktop `latest_ai_development` 既有 collection (`user_data_v4`, `item_data_v4`, `review_data_v4`)，工具會直接掛載 collection，避免重新索引。
+本專案另外加入 sqlite3 collection cache 檢查：若 ChromaDB 已有下載的 `chroma_index-001` collection (`benchmark_true_fresh_index_Filtered_User_1`, `benchmark_true_fresh_index_Filtered_Item_1`, `benchmark_true_fresh_index_Filtered_Review_1`)，工具會直接掛載 collection，避免重新索引。
 
 ### Step 4: 嚴格分離的 Agent 定義 (`config/agents.yaml`)
 

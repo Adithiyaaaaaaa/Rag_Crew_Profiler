@@ -11,6 +11,10 @@ from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSourc
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import JSONSearchTool
 from dotenv import load_dotenv
+from crewai.tools import tool
+
+from first_crew.tools.local_lookup import DATA_DIR as LOCAL_DATA_DIR
+from first_crew.tools.local_lookup import compact_user, dumps_record, find_item, find_one, find_reviews
 
 load_dotenv()
 
@@ -125,7 +129,13 @@ def get_user_rag_tool() -> Any:
     if _USER_RAG_TOOL is None:
         _USER_RAG_TOOL = create_rag_tool(
             json_path=DATA_DIR / "user_subset.json",
-            collection_name=_first_existing_collection("user_data_v4", "milestone1_user_subset"),
+            collection_name=_first_existing_collection(
+                "benchmark_true_fresh_index_Filtered_User_1",
+                "v3_hf_user_data",
+                "v4_nv_user_data",
+                "user_data_v4",
+                "milestone1_user_subset",
+            ),
             name="search_user_profile_data",
             description=(
                 "Search Yelp user profile records. Input must be a natural language search_query string, "
@@ -140,7 +150,12 @@ def get_item_rag_tool() -> Any:
     if _ITEM_RAG_TOOL is None:
         _ITEM_RAG_TOOL = create_rag_tool(
             json_path=_first_existing_path(DATA_DIR / "item_subset.json", DATA_DIR / "item_subset.jsonl"),
-            collection_name=_first_existing_collection("item_data_v4", "milestone1_item_subset"),
+            collection_name=_first_existing_collection(
+                "benchmark_true_fresh_index_Filtered_Item_1",
+                "v3_hf_item_data",
+                "item_data_v4",
+                "milestone1_item_subset",
+            ),
             name="search_restaurant_feature_data",
             description=(
                 "Search Yelp business/item records from the Desktop latest_ai_development knowledge data. "
@@ -156,7 +171,12 @@ def get_review_rag_tool() -> Any:
     if _REVIEW_RAG_TOOL is None:
         _REVIEW_RAG_TOOL = create_rag_tool(
             json_path=DATA_DIR / "review_subset.json",
-            collection_name=_first_existing_collection("review_data_v4", "milestone1_review_subset"),
+            collection_name=_first_existing_collection(
+                "benchmark_true_fresh_index_Filtered_Review_1",
+                "v3_hf_review_data",
+                "review_data_v4",
+                "milestone1_review_subset",
+            ),
             name="search_historical_reviews_data",
             description=(
                 "Search Yelp historical reviews. Input must be a natural language search_query string, "
@@ -164,6 +184,34 @@ def get_review_rag_tool() -> Any:
             ),
         )
     return _REVIEW_RAG_TOOL
+
+
+@tool("lookup_user_by_id")
+def lookup_user_by_id(user_id: str) -> str:
+    """Exact lookup for a Yelp user_id. Use this before semantic RAG when the ID is known."""
+    record = find_one(LOCAL_DATA_DIR / "user_subset.json", "user_id", str(user_id))
+    return dumps_record(compact_user(record)) if record else f"No exact user found for user_id={user_id}"
+
+
+@tool("lookup_item_by_id")
+def lookup_item_by_id(item_id: str) -> str:
+    """Exact lookup for a Yelp item_id/business_id. Use this before semantic RAG when the ID is known."""
+    record = find_item(str(item_id))
+    return dumps_record(record) if record else f"No exact item found for item_id={item_id}"
+
+
+@tool("lookup_reviews_by_user_id")
+def lookup_reviews_by_user_id(user_id: str) -> str:
+    """Exact lookup for historical reviews written by a user_id."""
+    records = find_reviews(user_id=str(user_id), limit=10)
+    return dumps_record(records) if records else f"No exact reviews found for user_id={user_id}"
+
+
+@tool("lookup_reviews_by_business_id")
+def lookup_reviews_by_business_id(business_id: str) -> str:
+    """Exact lookup for historical reviews about an item_id/business_id."""
+    records = find_reviews(item_id=str(business_id), limit=10)
+    return dumps_record(records) if records else f"No exact reviews found for business_id={business_id}"
 
 schema_path = DOCS_DIR / "Yelp Data Translation.md"
 schema_knowledge = StringKnowledgeSource(
@@ -183,7 +231,7 @@ class FirstCrew:
     def user_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["user_analyst"],  # type: ignore[index]
-            tools=[get_user_rag_tool(), get_review_rag_tool()],
+            tools=[lookup_user_by_id, lookup_reviews_by_user_id, get_user_rag_tool(), get_review_rag_tool()],
             verbose=True,
         )
 
@@ -191,7 +239,7 @@ class FirstCrew:
     def item_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["item_analyst"],  # type: ignore[index]
-            tools=[get_item_rag_tool(), get_review_rag_tool()],
+            tools=[lookup_item_by_id, lookup_reviews_by_business_id, get_item_rag_tool(), get_review_rag_tool()],
             verbose=True,
         )
 

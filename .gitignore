@@ -23,3 +23,7 @@ report.md
 
 # === Logs ===
 *.log
+
+# === LMDB Cache ===
+dummy_dataset/lmdb_cache/
+

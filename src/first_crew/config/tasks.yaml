@@ -1,9 +1,12 @@
 analyze_user_task:
   description: >
     Target user_id: {user_id}.
+    First call lookup_user_by_id with the exact user_id.
+    Then call lookup_reviews_by_user_id with the exact user_id.
     Use search_user_profile_data to find the target user's profile record.
     Use search_historical_reviews_data to find historical reviews written by this user.
-    Tool inputs must be natural language search_query strings, not raw JSON.
+    The exact lookup tools are primary because random Yelp IDs have no semantic meaning.
+    The RAG tools are fallback tools and must receive natural language search_query strings, not raw JSON.
     Summarize the user's rating habits, likely cuisine or service preferences, common complaints,
     positive signals, and review-writing style.
   expected_output: >
@@ -14,11 +17,14 @@ analyze_user_task:
 analyze_item_task:
   description: >
     Target business_id: {business_id}.
+    First call lookup_item_by_id with the exact business_id.
+    Then call lookup_reviews_by_business_id with the exact business_id.
     Use search_restaurant_feature_data to find the target business record.
     Use search_historical_reviews_data to find historical reviews about this business.
     The Desktop latest_ai_development data stores this identifier as item_id, so search for both business_id
     and item_id wording when writing your search query.
-    Tool inputs must be natural language search_query strings, not raw JSON.
+    The exact lookup tools are primary because random Yelp IDs have no semantic meaning.
+    The RAG tools are fallback tools and must receive natural language search_query strings, not raw JSON.
     Summarize the business categories, attributes, public sentiment, strengths, weaknesses, and any risk factors
     that may affect the target user's experience.
   expected_output: >
