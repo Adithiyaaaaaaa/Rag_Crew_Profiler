@@ -1,15 +1,15 @@
-# 🚀 WWW'25 AgentSociety Challenge: CrewAI Implementation
+#  WWW'25 AgentSociety Challenge: CrewAI Implementation
 
 This project integrates the WWW'25 AgentSociety Challenge with the CrewAI multi-agent framework. It focuses on building intelligent LLM Agents for user behavior simulation and recommendation systems using advanced orchestration patterns.
 
-## 🧠 Model
+##  Model
 
 This project is optimized to run with **NVIDIA NIM** (NVIDIA Inference Microservices) or local models. 
 The default configuration utilizes high-performance models via the NVIDIA API:
 - **Default LLM:** `openai/minimaxai/minimax-m2.7` or `nvidia/llama-3.3-nemotron-super-49b-v1`
 - **Embeddings:** `BAAI/bge-small-en-v1.5` (running locally via HuggingFace for cost-efficient, fast ChromaDB indexing)
 
-## 🤖 Agents
+##  Agents
 
 The core architecture operates with specialized AI agents, each serving a distinct role in the simulation ecosystem:
 
@@ -21,7 +21,7 @@ The core architecture operates with specialized AI agents, each serving a distin
 
 *(Note: Additional experimental agents like `web_researcher`, `eda_specialist`, and `manager_agent` are available for Collaborative and Hierarchical architectures).*
 
-## ⚙️ How It Works (The Process)
+##  How It Works (The Process)
 
 The simulation runs through a highly structured CrewAI pipeline orchestrating the agents:
 
@@ -38,7 +38,7 @@ The simulation runs through a highly structured CrewAI pipeline orchestrating th
 6. **Result Submission:** 
    The output is captured by the Serving Flow and passed back to the official simulator for evaluation against hidden Ground Truth data.
 
-## 🔍 RAG Tools
+##  RAG Tools
 
 All three RAG tools are backed by ChromaDB collections indexed with `BAAI/bge-small-en-v1.5` embeddings:
 
@@ -50,7 +50,7 @@ All three RAG tools are backed by ChromaDB collections indexed with `BAAI/bge-sm
 
 > **Note:** Each tool accepts only a plain natural language string as `search_query`. Passing structured JSON objects will cause a `FixedJSONSearchToolSchema` validation error.
 
-## 🏛️ Crew Architectures
+##  Crew Architectures
 
 This project explores three distinct CrewAI architectural patterns to optimize agent collaboration and task execution:
 
@@ -72,7 +72,7 @@ This project explores three distinct CrewAI architectural patterns to optimize a
 - **Best For:** Highly complex workflows where the order of execution might change based on intermediate results, or where parallel execution of sub-tasks is critical for efficiency.
 - **Process Type:** `Process.hierarchical`
 
-## 📊 Performance
+##  Performance
 
 | Architecture | Preference Estimation (%) | Review Generation (%) | Overall Quality (%) |
 |--------------|---------------------------|-----------------------|---------------------|
@@ -80,7 +80,7 @@ This project explores three distinct CrewAI architectural patterns to optimize a
 | Collaborative | 80.42 | 82.18 | 81.30 |
 | Hierarchical | 82.44 | 79.47 | 80.95 |
 
-## 📂 Project Structure
+##  Project Structure
 
 - `src/`: Contains the core logic and Crew definitions.
 - `crews/`: Implementations of the different Crew architectures.
@@ -89,7 +89,7 @@ This project explores three distinct CrewAI architectural patterns to optimize a
 - `websocietysimulator/`: The underlying simulation environment and tools (Interaction, Evaluation).
 - `data/`: Processed Yelp/Amazon/Goodreads datasets.
 
-## 🛠️ Quick Start
+##  Quick Start
 
 ### 1. Prerequisites
 - [Astral uv](https://docs.astral.sh/uv/) (for blazing fast dependency management)
@@ -142,7 +142,7 @@ uv run python run_simulator_test.py --eval-only
 }
 ```
 
-## 📖 References
+##  References
 - [AgentSociety Challenge Official](https://www.agentsocietychallenge.com/)
 - [AgentSocietyChallenge_w_CrewAI Repository](https://github.com/yuchieh/AgentSocietyChallenge_w_CrewAI)
 - [CrewAI Documentation](https://docs.crewai.com/)
