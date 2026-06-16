@@ -101,6 +101,21 @@ def run_single_task(idx, task, interaction_tool):
     agent.insert_task(task)
     return agent.workflow()
 
+_RATE_LIMIT_RETRIES = 3
+
+def run_single_task_with_retry(idx, task, interaction_tool):
+    for attempt in range(_RATE_LIMIT_RETRIES):
+        try:
+            return run_single_task(idx, task, interaction_tool)
+        except Exception as e:
+            is_rate_limit = "RateLimitError" in type(e).__name__ or "429" in str(e)
+            if is_rate_limit and attempt < _RATE_LIMIT_RETRIES - 1:
+                wait = 60 * (attempt + 1)
+                print(f"\n    ⚠️  Rate limit — waiting {wait}s before retry {attempt + 2}/{_RATE_LIMIT_RETRIES}...", flush=True)
+                time.sleep(wait)
+                continue
+            raise
+
 try:
     # 1. Initialize Simulator
     print("\n>>> [1/3] Loading toy dataset (dummy_dataset) + cache ...")
@@ -125,7 +140,7 @@ try:
         # --- Threading mode ---
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             futures_map = {
-                executor.submit(run_single_task, idx, task, simulator.interaction_tool): (idx, task)
+                executor.submit(run_single_task_with_retry, idx, task, simulator.interaction_tool): (idx, task)
                 for idx, task in enumerate(tasks_to_run)
             }
             for future in as_completed(futures_map):
@@ -156,7 +171,7 @@ try:
             t0 = time.time()
             try:
                 with ThreadPoolExecutor(max_workers=1) as executor:
-                    output = executor.submit(run_single_task, idx, task, simulator.interaction_tool).result(timeout=TIMEOUT_SEC)
+                    output = executor.submit(run_single_task_with_retry, idx, task, simulator.interaction_tool).result(timeout=TIMEOUT_SEC)
                 result = {"task": task.to_dict(), "output": output}
                 stars  = output.get("stars", "N/A")
             except FuturesTimeout:

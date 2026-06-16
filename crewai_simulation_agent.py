@@ -15,6 +15,9 @@ except Exception:
 class CrewAISimulationAgent(SimulationAgent):
     """AgentSociety simulator adapter for the Rag_Crew_Profiler Milestone 1 crew."""
 
+    def __init__(self, llm: Any = None, *args: Any, **kwargs: Any) -> None:
+        super().__init__(llm=llm, *args, **kwargs)
+
     def workflow(self) -> dict[str, Any]:
         task = self.task if isinstance(self.task, dict) else {
             "user_id": getattr(self.task, "user_id", ""),

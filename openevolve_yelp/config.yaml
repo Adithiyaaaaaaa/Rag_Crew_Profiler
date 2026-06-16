@@ -1,0 +1,45 @@
+# Evolution settings
+max_iterations: 100
+checkpoint_interval: 10
+parallel_evaluations: 1
+
+# LLM configuration
+llm:
+  api_base: "https://integrate.api.nvidia.com/v1"
+  models:
+    - name: "minimaxai/minimax-m2.7"
+      weight: 0.8
+    - name: "minimaxai/minimax-m2.7"
+      weight: 0.2
+  temperature: 0.7
+  max_tokens: 4000
+  timeout: 120
+
+# Prompt configuration
+prompt:
+  system_message: |
+    You are an expert programmer evolving a Yelp rating prediction algorithm for AgentSociety Track 1.
+    Modify only the code inside the EVOLVE-BLOCK.
+    Keep the predict_stars(user, item, user_reviews, item_reviews) signature unchanged.
+    Optimize for lower MAE and higher combined_score.
+    Focus on deterministic, robust algorithmic improvements that handle missing Yelp fields.
+  num_top_programs: 3
+  num_diverse_programs: 2
+
+# Database configuration: MAP-Elites + island model
+database:
+  population_size: 50
+  archive_size: 20
+  num_islands: 3
+  migration_interval: 10
+  feature_dimensions:
+    - "score"
+    - "complexity"
+
+# Evaluation settings
+evaluator:
+  timeout: 60
+  max_retries: 3
+
+# Logging
+log_level: "INFO"

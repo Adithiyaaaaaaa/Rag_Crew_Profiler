@@ -233,6 +233,7 @@ class FirstCrew:
             config=self.agents_config["user_analyst"],  # type: ignore[index]
             tools=[lookup_user_by_id, lookup_reviews_by_user_id, get_user_rag_tool(), get_review_rag_tool()],
             verbose=True,
+            max_rpm=int(os.getenv("AGENT_MAX_RPM", "15")),
         )
 
     @agent
@@ -241,6 +242,7 @@ class FirstCrew:
             config=self.agents_config["item_analyst"],  # type: ignore[index]
             tools=[lookup_item_by_id, lookup_reviews_by_business_id, get_item_rag_tool(), get_review_rag_tool()],
             verbose=True,
+            max_rpm=int(os.getenv("AGENT_MAX_RPM", "15")),
         )
 
     @agent
@@ -248,6 +250,7 @@ class FirstCrew:
         return Agent(
             config=self.agents_config["prediction_modeler"],  # type: ignore[index]
             verbose=True,
+            max_rpm=int(os.getenv("AGENT_MAX_RPM", "15")),
         )
 
     @task
@@ -277,4 +280,5 @@ class FirstCrew:
                 "config": {"model": EMBEDDING_MODEL},
             },
             verbose=True,
+            max_rpm=int(os.getenv("CREW_MAX_RPM", "15")),
         )

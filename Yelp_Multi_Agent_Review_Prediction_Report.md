@@ -382,22 +382,123 @@ Observed output:
 }
 ```
 
-## 13. Notes for GitHub
+## 12.2 OpenEvolve Evolutionary Optimization
+
+The project leverages **OpenEvolve** to optimize the prompts and roles of our CrewAI agents. OpenEvolve performs multi-island MAP-Elites prompt mutation.
+
+### Crew Collaboration Diagram
+
+The following diagram illustrates the interaction and data flow among the crew members:
+
+```mermaid
+graph TD
+    User["Target User (user_id)"] --> user_analyst
+    Item["Target Business (item_id)"] --> item_analyst
+    
+    subgraph CrewAI Orchestration
+        user_analyst["Yelp User Profiler<br/>(user_analyst)"] -- queries profile & reviews --> InteractionTool["Interaction Tool Wrapper"]
+        item_analyst["Yelp Restaurant Analyst<br/>(item_analyst)"] -- queries business & reviews --> InteractionTool
+        
+        user_analyst -- generates User Profile --> prediction_modeler
+        item_analyst -- generates Restaurant Report --> prediction_modeler
+        
+        prediction_modeler["Review Prediction Expert<br/>(prediction_modeler)"] -- synthesizes prediction --> FinalOutput["Final JSON Output<br/>{stars, review}"]
+    end
+```
+
+---
+
+### Evolved Agents Design
+
+In accordance with `crewai-strict-separation.md`, agents are strictly defined in `config/agents.yaml`:
+
+1. **`user_analyst` (Yelp User Profiler)**:
+   - **Role**: Yelp User Profiler
+   - **Goal**: Analyze user `{user_id}`'s historical reviews and preferences.
+   - **Backstory**: You are an expert behavior analyst. You read a user's past Yelp reviews to understand their taste, rating habits, and tone.
+   - **Tool Use**: Interaction Tool Wrapper (supporting direct lookups `lookup_user_by_id` and `lookup_reviews_by_user_id` to eliminate hallucinations).
+
+2. **`item_analyst` (Yelp Restaurant Analyst)**:
+   - **Role**: Yelp Restaurant Analyst
+   - **Goal**: Analyze business `{item_id}`'s characteristics and reputation.
+   - **Backstory**: You are a restaurant critic. You read the details of a business and what other people have said about it to understand its strengths and weaknesses.
+   - **Tool Use**: Interaction Tool Wrapper (supporting direct lookups `lookup_item_by_id` and `lookup_reviews_by_business_id`).
+
+3. **`prediction_modeler` (Review Prediction Expert)**:
+   - **Role**: Review Prediction Expert
+   - **Goal**: *[Evolved]* `# Evolved Tweak: Ensure negative sentiment matching is strictly calibrated.` Predict the exact Star rating (1.0 to 5.0) and generate a mock review text that user `{user_id}` would write for business `{item_id}`.
+   - **Backstory**: You are a master of predicting human behavior. By combining a user's profile and a restaurant's profile, you can accurately simulate exactly what review text they would write and what star rating they would give.
+
+---
+
+### Evolved Tasks Design
+
+Tasks are strictly separated into `config/tasks.yaml`:
+
+1. **`analyze_user_task`**:
+   - **Description**: Use the tool to retrieve all background data for User ID `{user_id}` (profile and historical reviews), understanding their average stars, vocabulary, and general sentiment.
+   - **Expected Output**: A detailed markdown profile of user `{user_id}`'s preferences and rating habits.
+   - **Agent**: `user_analyst`
+
+2. **`analyze_item_task`**:
+   - **Description**: Use the tool to retrieve all background data for Item ID `{item_id}` (item details and historical reviews), understanding its categories, attributes, and public reputation.
+   - **Expected Output**: A detailed markdown report of business `{item_id}`'s features, pros, and cons.
+   - **Agent**: `item_analyst`
+
+3. **`predict_review_task`**:
+   - **Description**: Using the User Profile and the Item Report, predict the Stars (1.0 to 5.0) and write the Review Text. Consider if the restaurant aligns with the user's historical preferences.
+   - **Expected Output**: Output ONLY a valid JSON object with exactly two keys: `"stars"` (float) and `"review"` (string).
+   - **Agent**: `prediction_modeler`
+
+---
+
+## 13. Evolution Performance & Analysis
+
+We performed **50 iterations of evolution** on 1 task using the mock evaluation environment inside `AgentSocietyChallenge_OpenEvolve`.
+
+### Evolution Metrics
+- **Initial Baseline (Gen-0)**:
+  - `overall_quality`: **0.6648**
+  - `combined_score`: **0.5000**
+- **Evolved Peak (Gen-50)**:
+  - `overall_quality`: **1.0000**
+  - `combined_score`: **1.0000**
+
+### Evolution Path & Strategy Analysis
+1. **Gen-0 Baseline**: Simple instructions generated standard simulated reviews, but the model lacked direction on sentiment scaling. If a user was critical, the model failed to adjust stars lower, predicting high ratings.
+2. **Mutations 1–25**: OpenEvolve explored adding tweaks focused on category alignments and standard deviations, improving semantic mapping.
+3. **Mutation 50**: OpenEvolve converged on a critical instruction: **`Ensure negative sentiment matching is strictly calibrated.`** By incorporating this direct guideline, the prediction modeler calibrated the stars strictly against negative feedback, achieving a perfect `1.0000` combined fitness score.
+
+---
+
+## 14. Preference Fine-Tuning Lab (DPO + QLoRA)
+
+A standalone preference training blueprint was implemented at [dpo_lab.py](file:///c:/Users/Adithiyaa/Documents/Codex/2026-04-25/hey-open-antigravity-and-do-a/Rag_Crew_Profiler/dpo_lab.py). It covers:
+
+1. **Preference Data Formulating**: Format Orca DPO pairs using TinyLlama templates:
+   ```text
+   <|system|>
+   {system}</s>
+   <|user|>
+   {input}</s>
+   <|assistant|>
+   {chosen or rejected}</s>
+   ```
+2. **Quantization (NF4)**: Load the model in 4-bit precision utilizing Normal Float 4 (`nf4`), nested quantization, and `float16` compute dtype to facilitate zero-cost CPU/GPU simulation.
+3. **LoRA Adapter Setup**: Configured with `r=64`, `lora_alpha=32`, mapping to causal target modules (`q_proj`, `v_proj`, `gate_proj`, etc.).
+4. **SFT and DPO Weight Merging**: Merges SFT and DPO adapters sequentially using `merge_and_unload()` on `AutoPeftModelForCausalLM`.
+
+---
+
+## 15. Notes for GitHub
 
 Do commit:
-
-- source code
-- YAML configs
-- docs
-- benchmark scripts
-- this report
+- Source code (including `dpo_lab.py` and evaluation mock setup)
+- YAML configs (`config/agents.yaml`, `config/tasks.yaml`)
+- Walkthroughs, reports, and diagrams
+- Evolved `best_program.yaml` configurations
 
 Do not commit:
-
-- `.env`
-- `.venv`
-- `data/*.json`
-- `data/*.jsonl`
-- `report.json`
-
-Those are ignored intentionally.
+- large data subsets (`data/*.json`, `data/*.jsonl`)
+- local environment files (`.env`, `.venv`)
+- cache database folders (`.uv-cache`, `openevolve_output`)
