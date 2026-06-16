@@ -4,7 +4,7 @@ This repository contains a production-grade multi-agent simulation framework opt
 
 ---
 
-## 🚀 Recent Technical Changes & Improvements
+##  Recent Technical Changes & Improvements
 
 We updated the baseline repository with the following optimizations and features:
 
@@ -26,7 +26,7 @@ We updated the baseline repository with the following optimizations and features
 
 ---
 
-## 📊 System Architecture & Collaboration Pattern
+##  System Architecture & Collaboration Pattern
 
 ```mermaid
 graph TD
@@ -46,7 +46,7 @@ graph TD
 
 ---
 
-## 🛠️ Agents & Tasks Design
+##  Agents & Tasks Design
 
 Strict separation of prompts is maintained in accordance with `crewai-strict-separation.md`:
 - **Agents Config (`config/agents.yaml`)**:
@@ -60,7 +60,7 @@ Strict separation of prompts is maintained in accordance with `crewai-strict-sep
 
 ---
 
-## 🧱 Crew Architectural Topologies
+##  Crew Architectural Topologies
 
 We support three distinct multi-agent orchestration topologies:
 
@@ -79,7 +79,7 @@ We support three distinct multi-agent orchestration topologies:
 
 ---
 
-## 📈 Performance Benchmarks
+##  Performance Benchmarks
 
 ### Crew Topology Performance
 | Architecture | Preference Estimation (%) | Review Generation (%) | Overall Quality (%) |
@@ -94,9 +94,9 @@ We support three distinct multi-agent orchestration topologies:
 
 ---
 
-## 🧪 Preference Alignment Lab (DPO + QLoRA)
+##  Preference Alignment Lab (DPO + QLoRA)
 
-Our standalone script [dpo_lab.py](file:///c:/Users/Adithiyaa/Documents/Codex/2026-04-25/hey-open-antigravity-and-do-a/Rag_Crew_Profiler/dpo_lab.py) maps the DPO training pipeline:
+Our standalone script [dpo_lab.py] maps the DPO training pipeline:
 1. **Formatting**: Formulates training prompts using `<|user|>` templates.
 2. **Quantization**: Normal Float 4 (`nf4`) 4-bit config with nested double quantization.
 3. **LoRA Config**: Rank $r=64$, scaling $\alpha=32$ targeted to attention projection heads.
@@ -104,7 +104,7 @@ Our standalone script [dpo_lab.py](file:///c:/Users/Adithiyaa/Documents/Codex/20
 
 ---
 
-## 🚀 Quick Start Guide
+##  Quick Start Guide
 
 ### 1. Installation
 We use Astral `uv` exclusively for dependency synchronization:
@@ -138,11 +138,11 @@ $env:OPENEVOLVE_NUM_TASKS = "1"; uv run python -m openevolve.cli config/agents_e
 cd AgentSocietyChallenge_OpenEvolve
 uv run python ../openevolve/scripts/visualizer.py --path config/openevolve_output
 ```
-👉 Open your browser to **[http://127.0.0.1:8080](http://127.0.0.1:8080)**.
+ Open your browser to **[http://127.0.0.1:8080](http://127.0.0.1:8080)**.
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 - `AgentSocietyChallenge_w_CrewAI/` -> Submodule containing baseline CrewAI orchestration.
 - `AgentSocietyChallenge_OpenEvolve/` -> OpenEvolve evolutionary sandbox and checkpoints.
